@@ -1,8 +1,41 @@
+import 'package:appthuetho/controllers/auth_controller.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:appthuetho/views/customer/customer_main_screen.dart'; // Sẽ tạo sau
+import 'package:intl/date_symbol_data_file.dart';
+import 'package:provider/provider.dart';
+import 'firebase_options.dart';
+import 'services/notification_service.dart';
+import 'controllers/customer_controller.dart';
+import 'controllers/provider_controller.dart';
+import 'package:firebase_core/firebase_core.dart';
+// Đảm bảo bạn import đúng các đường dẫn này theo project của bạn nhé
+import 'views/auth/login_screen.dart';
+import 'views/customer/customer_main_screen.dart';
+import 'views/provider/provider_main_screen.dart'; // Import màn hình của provider
 
-void main() {
-  runApp(const MyApp());
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print("📢 Nhận thông báo nền: ${message.notification?.title}");
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // await NotificationService.init();
+
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthController()),
+        ChangeNotifierProvider(create: (_) => CustomerController()),
+        ChangeNotifierProvider(create: (_) => ProviderController()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -14,11 +47,11 @@ class MyApp extends StatelessWidget {
       title: 'App Thuê Thợ',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        useMaterial3: true,                    // Dùng Material Design mới nhất
-        primaryColor: const Color(0xFF00AEEF), // Xanh dương Grab
+        useMaterial3: true,
+        primaryColor: const Color(0xFF00AEEF),
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF00AEEF),
-          secondary: const Color(0xFFFF9500), // Cam accent
+          secondary: const Color(0xFFFF9500),
           brightness: Brightness.light,
         ),
         scaffoldBackgroundColor: Colors.grey[50],
@@ -36,7 +69,14 @@ class MyApp extends StatelessWidget {
         ),
         fontFamily: 'Roboto',
       ),
-      home: const CustomerMainScreen(), // Màn hình chính khách hàng
+      // --- PHẦN THAY ĐỔI Ở ĐÂY ---
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/customer-home': (context) => const CustomerMainScreen(),
+        '/provider-home': (context) => const ProviderMainScreen(),
+      },
+      // Xoá bỏ dòng: home: const CustomerMainScreen(),
     );
   }
 }

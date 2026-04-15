@@ -1,10 +1,18 @@
-import 'package:appthuetho/views/customer/chat_detail_screen.dart';
 import 'package:flutter/material.dart';
+import '../../services/chat_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'chat_detail_screen_realtime.dart';
 
 class TechnicianListScreen extends StatelessWidget {
+  final String jobId; // ✅ Đã thêm biến jobId để nhận ID đơn hàng từ trang trước
   final List<dynamic> suggestedTechnicians;
 
-  const TechnicianListScreen({super.key, required this.suggestedTechnicians});
+  // ✅ Cập nhật constructor để bắt buộc truyền jobId vào
+  const TechnicianListScreen({
+    super.key,
+    required this.jobId,
+    required this.suggestedTechnicians
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,16 +34,28 @@ class TechnicianListScreen extends StatelessWidget {
               ),
               title: Text(tech['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text(
-                '${tech['distance']} km • ⭐ ${tech['rating']} • ${tech['serviceTypes'].join(', ')}',
+                '${tech['distance'].toStringAsFixed(1)} km • ⭐ ${tech['rating']} • ${tech['serviceTypes'].join(', ')}',
               ),
               trailing: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  // ✅ TẠO HOẶC MỞ CHAT ROOM
+                  final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+                  if (currentUserId == null) return;
+
+                  final chatService = ChatService();
+                  final chatRoomId = await chatService.createOrGetChatRoom(
+                    currentUserId,
+                    tech['id'],
+                  );
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ChatDetailScreen(
-                        technicianName: tech['name'],
-                        technicianId: tech['id'] ?? 'tech_001',
+                        chatRoomId: chatRoomId,
+                        otherUserId: tech['id'],
+                        otherUserName: tech['name'],
+                        otherUserAvatar: tech['avatar'] ?? 'https://i.pravatar.cc/150',
                       ),
                     ),
                   );

@@ -2,6 +2,30 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+ <!-- Location -->
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Cần truy cập vị trí để tìm đơn gần bạn</string>
+
+  <key>NSLocationAlwaysUsageDescription</key>
+  <string>Cần truy cập vị trí ngay cả khi app đóng để cập nhật vị trí cho khách hàng</string>
+
+  <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+  <string>Cần truy cập vị trí để tối ưu trải nghiệm</string>
+
+  <!-- Camera -->
+  <key>NSCameraUsageDescription</key>
+  <string>Cần truy cập camera để chụp ảnh thiết bị</string>
+
+  <!-- Photo Library -->
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>Cần truy cập thư viện ảnh để gửi hình</string>
+
+  <!-- Notifications -->
+  <key>UIBackgroundModes</key>
+  <array>
+    <string>fetch</string>
+    <string>remote-notification</string>
+  </array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

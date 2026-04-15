@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'orders_screen.dart';
-import 'ai_screen.dart';
-import 'chat_screen.dart';
+import 'ai_screen_updated.dart';  // ← ĐỔI TỪ ai_screen.dart
+import 'chat_screen_realtime.dart';  // ← ĐỔI TỪ chat_screen.dart
 import 'profile_screen.dart';
 
 class CustomerMainScreen extends StatefulWidget {
@@ -13,13 +13,13 @@ class CustomerMainScreen extends StatefulWidget {
 }
 
 class _CustomerMainScreenState extends State<CustomerMainScreen> {
-  int _currentIndex = 2; // Mặc định mở tab AI (giữa) như ảnh em
+  int _currentIndex = 0; // Mặc định mở tab AI (giữa) như ảnh em
 
   final List<Widget> _screens = [
     const HomeScreen(),
     const OrdersScreen(),
-    const AIScreen(),
-    const ChatScreen(),
+    const AiScreenComplete(),
+    const ChatScreenRealtime(),
     const ProfileScreen(),
   ];
 

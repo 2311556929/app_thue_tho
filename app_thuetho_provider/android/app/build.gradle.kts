@@ -1,0 +1,48 @@
+plugins {
+    id("com.android.application")
+    id("com.google.gms.google-services") // FlutterFire
+    id("kotlin-android")
+    id("dev.flutter.flutter-gradle-plugin")
+}
+
+android {
+    namespace = "com.example.app_thuetho_provider"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8   // ✅ Sửa từ VERSION_17 về VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+        isCoreLibraryDesugaringEnabled = true
+
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"   // ✅ Phải khớp với Java 8
+    }
+
+    defaultConfig {
+        applicationId = "com.example.app_thuetho_provider"
+        // ✅ Ép minSdk về 21 để tương thích với flutter_local_notifications và desugaring
+        minSdk = flutter.minSdkVersion   // flutter.minSdkVersion có thể thấp hơn, cần ghi đè
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
+
+// ✅ THÊM KHỐI DEPENDENCIES VÀO CUỐI FILE
+dependencies {
+    // Bật desugaring cho thư viện yêu cầu Java 8 APIs
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+}

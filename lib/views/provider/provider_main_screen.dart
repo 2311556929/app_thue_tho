@@ -1,9 +1,11 @@
-import 'package:appthuetho/views/provider/new_jobs_screen.dart';
-import 'package:appthuetho/views/provider/provider_chat_screen.dart';
-import 'package:appthuetho/views/provider/provider_dashboard.dart';
-import 'package:appthuetho/views/provider/provider_profile_screen.dart';
+import 'package:appthuetho/views/customer/chat_detail_screen_realtime.dart';
 import 'package:flutter/material.dart';
+import 'provider_dashboard.dart';
+import 'new_jobs_screen.dart';
+import '../customer/chat_screen_realtime.dart';
 
+// ✅ IMPORT FILE CHAT VÀ PROFILE CHUẨN
+import 'provider_profile_screen_complete.dart';   // Hoặc 'provider_profile_screen.dart' tuỳ tên file bạn đặt
 
 class ProviderMainScreen extends StatefulWidget {
   const ProviderMainScreen({super.key});
@@ -15,17 +17,28 @@ class ProviderMainScreen extends StatefulWidget {
 class _ProviderMainScreenState extends State<ProviderMainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const ProviderDashboard(),
-    const NewJobsScreen(),
-    const ProviderChatScreen(),
-    const ProviderProfileScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      ProviderDashboard(
+        onViewNewOrders: () => setState(() => _currentIndex = 1),
+      ),
+      const NewJobsScreen(),
+      const ChatScreenRealtime(),
+      const ProviderProfileScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: IndexedStack( // IndexedStack giúp giữ trạng thái màn hình khi chuyển tab
+        index: _currentIndex,
+        children: _screens,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
@@ -36,7 +49,7 @@ class _ProviderMainScreenState extends State<ProviderMainScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.notifications_active), label: 'Đơn mới'),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Hồ sơ'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Tài khoản'),
         ],
       ),
     );
