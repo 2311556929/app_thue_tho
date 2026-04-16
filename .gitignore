@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+node_modules/
+.env
+build/
+dist/
+.DS_Store
+".env" 
+backend-appthuetho/*.json
+*.apk
