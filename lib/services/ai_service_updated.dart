@@ -1,169 +1,154 @@
+
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:appthuetho/data/csv_knowledge_base.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'rag_service.dart';
 
 class AiService {
-  static const String _apiKey = 'AIzaSyCmvl7Si00VFEUashX_86HCYIPPIpk0vFo';
+  // ✅ Key đúng từ api_keys.dart của bạn (bắt đầu AIzaSy...)
+  // Thay bằng key từ: https://makersuite.google.com/app/apikey
+  static const String _apiKey = '';
 
+  /// Hàm chính: Chat với Thợ AI - có RAG từ CSV
   static Future<String> chatWithAI(String message, File? imageFile) async {
     try {
+      // BƯỚC 1: Lấy RAG context từ CSV (không cần internet)
+      final ragContext = await RagService.getContext(message);
+
+      // BƯỚC 2: Build system prompt có context giá
+      final systemPrompt = _buildSystemPrompt(ragContext);
+
+      // BƯỚC 3: Gọi Gemini API
       final model = GenerativeModel(
-        model: 'gemini-1.5-flash',
+        model: 'gemini-1.5-flash-latest',
         apiKey: _apiKey,
+        generationConfig: GenerationConfig(
+          temperature: 0.7,
+          maxOutputTokens: 500,
+        ),
       );
 
-      // SYSTEM PROMPT TỐT HƠN
-      final systemPrompt = '''
-BẠN LÀ CHUYÊN GIA SỬA CHỮA ĐỒ GIA DỤNG VỚI 20 NĂM KINH NGHIỆM.
+      final parts = <Part>[];
 
-VAI TRÒ:
-- Tên: Thợ AI 
-- Chuyên môn: Sửa chữa điện, nước, điều hòa, tủ lạnh, máy giặt, TV, và tất cả đồ gia dụng
-- Phong cách: Thân thiện, chuyên nghiệp, giải thích dễ hiểu
-
-NHIỆM VỤ:
-1. Nếu khách GỬI ẢNH:
-   - Phân tích ảnh chi tiết
-   - Chẩn đoán 2-3 nguyên nhân có thể xảy ra
-   - Đưa ra cách sửa tạm thời (nếu có)
-   - Tư vấn có nên gọi thợ không
-
-2. Nếu khách MÔ TẢ VẤN ĐỀ:
-   - Đặt 1-2 câu hỏi để hiểu rõ hơn (nếu cần)
-   - Đưa ra chẩn đoán
-   - Hướng dẫn kiểm tra/sửa cơ bản
-   - Tư vấn mức độ nghiêm trọng
-
-3. Nếu khách HỎI GIÁ:
-   - Ước tính giá khoảng (VD: 150-300k)
-   - Giải thích tại sao dao động giá
-
-4. Nếu khách HỎI CHUNG:
-   - Trả lời ngắn gọn, chính xác
-   - Thêm tip hữu ích nếu liên quan
-
-QUAN TRỌNG:
-- KHÔNG BAO GIỜ nói "xin lỗi, tôi không biết"
-- KHÔNG BAO GIỜ nói "hệ thống đang bận"
-- LÀM HẾT SỨC để giúp đỡ
-- Trả lời TIẾNG VIỆT, giọng thân thiện
-- Độ dài: 3-6 câu, ngắn gọn dễ hiểu
-- Dùng emoji phù hợp: 🔧⚡💧❄️🛠️✅
-
-VÍ DỤ TRẢ LỜI TỐT:
-"🔧 Dựa vào mô tả của bạn, tủ lạnh không lạnh có thể do:
-1. Block máy nén hỏng (phổ biến nhất)
-2. Gas bị rò rỉ
-3. Cảm biến nhiệt độ lỗi
-
-Bạn thử kiểm tra: Block có nóng bất thường không? Có nghe tiếng kêu lạ không?
-
-Nếu block nóng quá → gọi thợ ngay (khoảng 300-500k).
-Nếu block nguội → có thể thiếu gas (200-400k).
-
-Có vấn đề gì khác không ạ? 😊"
-''';
-
-      List<Part> parts = [];
-
+      // Đính kèm ảnh nếu có
       if (imageFile != null) {
         final bytes = await imageFile.readAsBytes();
         parts.add(DataPart('image/jpeg', bytes));
       }
 
-      final userText = message.isEmpty && imageFile != null
-          ? "Phân tích hình ảnh này và chẩn đoán lỗi chi tiết, rồi đưa ra cách sửa"
+      final userText = (message.isEmpty && imageFile != null)
+          ? 'Phân tích hình ảnh thiết bị này: chẩn đoán lỗi, mức độ nguy hiểm, cách xử lý tạm thời và ước tính chi phí'
           : message;
 
-      parts.add(TextPart("$systemPrompt\n\nKhách hàng: $userText"));
+      parts.add(TextPart('$systemPrompt\n\nKhách hàng hỏi: $userText'));
 
-      final response = await model.generateContent([Content.multi(parts)]);
+      final response = await model.generateContent(
+        [Content.multi(parts)],
+      ).timeout(const Duration(seconds: 15));
 
-      String aiResponse = response.text?.trim() ?? "Bạn có thể mô tả chi tiết hơn được không ạ? 🤔";
+      final text = response.text?.trim() ?? '';
+      if (text.isEmpty) return _fallbackFromCsv(message);
 
-      return aiResponse;
+      return text;
+
+    } on TimeoutException {
+      // Timeout → dùng CSV để trả lời
+      return _fallbackFromCsv(message);
     } catch (e) {
-      print("Lỗi Gemini: $e");
-
-      // FALLBACK RESPONSE - vẫn hữu ích
-      if (message.contains('tủ lạnh') || message.contains('tu lanh')) {
-        return '''🔧 Tủ lạnh không lạnh thường do:
-1. Block máy nén hỏng (phổ biến)
-2. Gas rò rỉ
-3. Cảm biến lỗi
-
-Giá sửa khoảng 200-500k tùy lỗi.
-Bạn có thể mô tả thêm triệu chứng để tôi tư vấn cụ thể hơn không? 😊''';
-      }
-
-      if (message.contains('điều hòa') || message.contains('máy lạnh')) {
-        return '''❄️ Máy lạnh không mát thường do:
-1. Bẩn lọc gió (tự vệ sinh được)
-2. Thiếu gas (200-300k)
-3. Block hỏng (500k+)
-
-Bạn thử kiểm tra block nóng bất thường không nhé? 🔧''';
-      }
-
-      return "Có vẻ mạng đang chập chờn. Bạn có thể mô tả vấn đề chi tiết hơn để tôi tư vấn tốt hơn được không ạ? 😊";
+      print('Lỗi Gemini: $e');
+      // Lỗi bất kỳ → dùng CSV để trả lời, không nói "mạng chập chờn"
+      return _fallbackFromCsv(message);
     }
   }
 
+  /// Build system prompt chuẩn có RAG context
+  static String _buildSystemPrompt(String ragContext) {
+    return '''
+BẠN LÀ CHUYÊN GIA SỬA CHỮA ĐỒ GIA DỤNG VỚI 20 NĂM KINH NGHIỆM.
+Tên: Thợ AI | Phong cách: Thân thiện, chuyên nghiệp
+
+${ragContext.isNotEmpty ? ragContext : ''}
+
+NHIỆM VỤ:
+1. Nếu có ẢNH: Phân tích chi tiết, chẩn đoán 2-3 nguyên nhân, so khớp với bảng giá
+2. Nếu có MÔ TẢ: Chẩn đoán, hướng dẫn xử lý tạm thời an toàn
+3. VỀ GIÁ: Phải dùng khoảng giá từ BẢNG GIÁ trên, không tự bịa
+4. AN TOÀN: Lỗi điện/gas → bắt buộc cảnh báo nguy hiểm trước
+
+ĐỊNH DẠNG TRẢ LỜI:
+- 3-6 câu ngắn gọn, tiếng Việt thân thiện
+- Dùng emoji: 🔧⚡💧❄️✅⚠️
+- Luôn kết thúc: "💰 Chi phí dự kiến: [khoảng giá]"
+
+TUYỆT ĐỐI KHÔNG:
+- Nói không biết / không thể trả lời
+- Bịa giá ngoài bảng giá
+- Bỏ qua cảnh báo an toàn
+''';
+  }
+
+  /// Fallback thông minh từ CSV khi Gemini lỗi
+  static Future<String> _fallbackFromCsv(String message) async {
+    final results = await CsvKnowledgeBase.search(message);
+
+    if (results.isNotEmpty) {
+      final item = results.first;
+      final priceStr = CsvKnowledgeBase.formatPrice(
+        item['price_min'] as int? ?? 0,
+        item['price_max'] as int? ?? 0,
+      );
+      final warning = item['warning']?.toString() ?? '';
+      final hasWarning = warning.isNotEmpty;
+
+      return '''${hasWarning ? '$warning\n\n' : ''}🔧 Dựa vào mô tả, đây có thể là: **${item['fault_name']}**
+
+✅ Làm ngay: ${item['safe_action']}
+
+📋 Triệu chứng: ${item['symptoms']}
+
+💰 Chi phí dự kiến: $priceStr
+
+Gửi thêm ảnh thiết bị để tôi tư vấn chính xác hơn nhé! 📸''';
+    }
+
+    // Không match gì cả
+    return '''🔧 Tôi cần thêm thông tin để tư vấn chính xác!
+
+Bạn cho tôi biết:
+• Thiết bị bị hỏng là gì? (điều hòa, tủ lạnh, điện, nước...)
+• Triệu chứng cụ thể ra sao?
+• Sự cố xảy ra từ khi nào?
+
+Hoặc gửi ảnh thiết bị cho tôi phân tích nhé! 📸 😊''';
+  }
+
+  /// Phân tích ảnh - trả về 3 chẩn đoán ngắn
   static Future<List<String>> analyzeAppliance(File imageFile) async {
     try {
-      final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: _apiKey);
+      final model = GenerativeModel(model: 'gemini-1.5-flash-latest', apiKey: _apiKey);
 
-      final prompt = TextPart('''
-BẠN LÀ CHUYÊN GIA SỬA CHỮA ĐỒ ĐIỆN TỬ VÀ GIA DỤNG.
+      final prompt = TextPart(
+        'Phân tích ảnh thiết bị gia dụng này. '
+            'Đưa ra ĐÚNG 3 chẩn đoán ngắn (dưới 8 chữ tiếng Việt mỗi cái). '
+            'CỤ THỂ tên lỗi/linh kiện, KHÔNG chung chung. '
+            'Trả về JSON array thuần túy:\n'
+            '["chẩn đoán 1", "chẩn đoán 2", "chẩn đoán 3"]',
+      );
 
-Phân tích hình ảnh thiết bị này và đưa ra 3 chẩn đoán NGẮN GỌN nhất về lỗi có thể xảy ra.
-Mỗi chẩn đoán DƯỚI 8 CHỮ, cụ thể, dễ hiểu.
-
-BẮT BUỘC TRẢ VỀ ĐÚNG ĐỊNH DẠNG MẢNG JSON, KHÔNG GIẢI THÍCH.
-
-VÍ DỤ OUTPUT TỐT:
-["Block máy nén hỏng", "Thiếu gas lạnh", "Cảm biến nhiệt độ lỗi"]
-
-VÍ DỤ OUTPUT XẤU (KHÔNG LÀM):
-["Có thể bị hỏng", "Lỗi không xác định", "Cần kiểm tra"]
-
-QUAN TRỌNG: 
-- Phải CỤ THỂ (đúng tên linh kiện)
-- Phải NGẮN GỌN (dưới 8 chữ)
-- Phải TIẾNG VIỆT thông dụng
-      ''');
-
-      final imageBytes = await imageFile.readAsBytes();
-      final imagePart = DataPart('image/jpeg', imageBytes);
-
+      final bytes = await imageFile.readAsBytes();
       final response = await model.generateContent([
-        Content.multi([prompt, imagePart])
-      ]);
+        Content.multi([prompt, DataPart('image/jpeg', bytes)]),
+      ]).timeout(const Duration(seconds: 15));
 
-      String text = response.text ?? "[]";
+      String text = response.text ?? '[]';
       text = text.replaceAll('```json', '').replaceAll('```', '').trim();
 
-      final List<dynamic> decodedList = jsonDecode(text);
-      List<String> suggestions = decodedList.map((e) => e.toString()).toList();
-
-      // Validate suggestions
-      if (suggestions.isEmpty || suggestions.every((s) => s.contains('không xác định') || s.contains('Lỗi'))) {
-        return [
-          "Kiểm tra nguồn điện",
-          "Kiểm tra dây cắm",
-          "Liên hệ thợ kiểm tra"
-        ];
-      }
-
-      return suggestions;
-
+      final decoded = jsonDecode(text) as List;
+      return decoded.map((e) => e.toString()).toList();
     } catch (e) {
-      print("Lỗi AI phân tích ảnh: $e");
-      return [
-        "Kiểm tra nguồn điện",
-        "Kiểm tra kết nối",
-        "Gọi thợ kiểm tra chi tiết"
-      ];
+      return ['Kiểm tra nguồn điện', 'Kiểm tra dây kết nối', 'Gọi thợ kiểm tra'];
     }
   }
 }

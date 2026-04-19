@@ -189,14 +189,7 @@ class OrdersScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      // TODO: Đánh giá
-                    },
-                    child: const Text('Đánh giá'),
-                  ),
-                ),
+
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(

@@ -58,6 +58,7 @@ dependencies:
   permission_handler: ^11.0.1
   cached_network_image: ^3.3.0
   url_launcher: ^6.2.2
+  csv: ^6.0.0
 
 
 
@@ -83,7 +84,8 @@ flutter_launcher_icons:
 
 # The following section is specific to Flutter packages.
 flutter:
-
+  assets:
+    - assets/knowledge_base_thue_tho.csv
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

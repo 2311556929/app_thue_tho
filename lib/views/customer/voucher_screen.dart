@@ -116,7 +116,7 @@ class _VoucherScreenState extends State<VoucherScreen> with SingleTickerProvider
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.card_giftcard, size: 80, color: Colors.grey[300]),
+            Icon(Icons.card_giftcard, size: 70, color: Colors.grey[300]),
             const SizedBox(height: 16),
             Text(
               'Chưa có voucher nào',

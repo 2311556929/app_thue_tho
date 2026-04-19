@@ -696,16 +696,34 @@ class _NewJobsScreenState extends State<NewJobsScreen> {
   }
 
   // Gọi điện
+  // Gọi điện
   Future<void> _makePhoneCall(String phoneNumber) async {
+    // 1. Kiểm tra xem có số điện thoại không đã
+    if (phoneNumber.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Lỗi: Đơn hàng này chưa có số điện thoại của khách!'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // 2. Thực hiện gọi
     final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
     if (await canLaunchUrl(phoneUri)) {
       await launchUrl(phoneUri);
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Không thể gọi điện')),
+          const SnackBar(
+            content: Text('Thiết bị của bạn không hỗ trợ gọi điện (Có thể bạn đang dùng máy ảo).'),
+            backgroundColor: Colors.orange,
+          ),
         );
       }
     }
   }
-}
+    }

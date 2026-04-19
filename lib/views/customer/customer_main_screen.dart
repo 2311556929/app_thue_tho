@@ -19,7 +19,6 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
     const HomeScreen(),
     const OrdersScreen(),
     const AiScreenComplete(),
-    const ChatScreenRealtime(),
     const ProfileScreen(),
   ];
 
@@ -37,7 +36,6 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
           BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: 'Đơn hàng'),
           BottomNavigationBarItem(icon: Icon(Icons.auto_awesome), label: 'AI'), // Tab giữa
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Hồ sơ'),
         ],
       ),

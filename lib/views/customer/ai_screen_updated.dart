@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:appthuetho/views/customer/post_job_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/ai_service_updated.dart';
@@ -37,7 +38,7 @@ class _AiScreenCompleteState extends State<AiScreenComplete> {
     super.initState();
     // Lời chào ban đầu từ AI - CHỈ 1 LẦN
     _messages.add(ChatMessage(
-      text: "👋 Xin chào! Tôi là **Thợ AI** với 20 năm kinh nghiệm.\n\n"
+      text: "👋 Xin chào! Tôi là Thợ AI.\n\n"
           "🔧 Tôi có thể giúp bạn:\n"
           "• Chẩn đoán lỗi từ ảnh\n"
           "• Tư vấn cách sửa tạm thời\n"
@@ -133,7 +134,7 @@ class _AiScreenCompleteState extends State<AiScreenComplete> {
             SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Thợ AI - Chuyên Gia Sửa Chữa',
+                'Thợ AI- Appthuetho',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -219,6 +220,7 @@ class _AiScreenCompleteState extends State<AiScreenComplete> {
               children: [
                 Icon(Icons.tips_and_updates, color: Colors.blue[700], size: 20),
                 const SizedBox(width: 8),
+
                 const Expanded(
                   child: Text(
                     '💡 Chụp ảnh thiết bị để được chẩn đoán chính xác nhất',
@@ -228,7 +230,20 @@ class _AiScreenCompleteState extends State<AiScreenComplete> {
               ],
             ),
           ),
-
+          if (_messages.length == 1) // chỉ hiện khi chưa chat
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                children: [
+                  _buildQuickBtn('⚡ Chập điện', 'Điện nhà bị chập, nhảy aptomat liên tục'),
+                  _buildQuickBtn('💧 Rò nước', 'Vòi nước bị rỉ, ống nước rò rỉ'),
+                  _buildQuickBtn('❄️ Máy lạnh kém', 'Điều hòa không mát, kém lạnh'),
+                  _buildQuickBtn('🧊 Tủ lạnh hỏng', 'Tủ lạnh không lạnh, không đông'),
+                  _buildQuickBtn('💸 Hỏi giá', 'Cho tôi biết bảng giá các dịch vụ sửa chữa'),
+                ],
+              ),
+            ),
           // Khu vực hiển thị tin nhắn
           Expanded(
             child: ListView.builder(
@@ -284,55 +299,121 @@ class _AiScreenCompleteState extends State<AiScreenComplete> {
   }
 
   Widget _buildChatBubble(ChatMessage message) {
+    final isAI = !message.isUser;
+
+    // Phát hiện nếu message có chứa giá → hiện nút đặt thợ
+    final hasPrice = isAI &&
+        (message.text.contains('Chi phí') || message.text.contains('dự kiến'));
+
     return Align(
       alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(14),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
-        decoration: BoxDecoration(
-          color: message.isUser ? const Color(0xFF00AEEF) : Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(20),
-            topRight: const Radius.circular(20),
-            bottomLeft: Radius.circular(message.isUser ? 20 : 4),
-            bottomRight: Radius.circular(message.isUser ? 4 : 20),
-          ),
-          boxShadow: [
-            if (!message.isUser)
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              )
-          ],
-        ),
+        constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.78),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (message.image != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.file(message.image!, fit: BoxFit.cover),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: message.isUser ? const Color(0xFF00AEEF) : Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(20),
+                  topRight: const Radius.circular(20),
+                  bottomLeft: Radius.circular(message.isUser ? 20 : 4),
+                  bottomRight: Radius.circular(message.isUser ? 4 : 20),
+                ),
+                boxShadow: [
+                  if (!message.isUser)
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 8, offset: const Offset(0, 2),
+                    )
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (message.image != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(message.image!, fit: BoxFit.cover),
+                    ),
+                  if (message.text.isNotEmpty)
+                    Text(
+                      message.text,
+                      style: TextStyle(
+                        color: message.isUser ? Colors.white : Colors.black87,
+                        fontSize: 15, height: 1.5,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // Nút "Đặt thợ ngay" nếu AI đề cập đến giá
+            if (hasPrice) ...[
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const PostJobScreen()), // Thay bằng tên class màn hình của bạn
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF9500),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.build_circle, color: Colors.white, size: 18),
+                      SizedBox(width: 6),
+                      Text('Đặt thợ sửa ngay',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13)),
+
+                    ],
+                  ),
                 ),
               ),
-            if (message.text.isNotEmpty)
-              Text(
-                message.text,
-                style: TextStyle(
-                  color: message.isUser ? Colors.white : Colors.black87,
-                  fontSize: 15,
-                  height: 1.5,
-                ),
-              ),
+            ],
           ],
         ),
       ),
     );
   }
-
+  Widget _buildQuickBtn(String label, String query) {
+    return GestureDetector(
+      onTap: () {
+        _textController.text = query;
+        _sendMessage();
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF00AEEF).withOpacity(0.1),
+          border: Border.all(color: const Color(0xFF00AEEF)),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF0369A1),
+          ),
+        ),
+      ),
+    );
+  }
   Widget _buildInputArea() {
     return Container(
       padding: const EdgeInsets.all(12),

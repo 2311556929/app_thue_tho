@@ -1,4 +1,6 @@
+import 'package:appthuetho/views/customer/customer_main_screen.dart';
 import 'package:appthuetho/views/provider/provider_profile_screen.dart'; // Tuỳ chỉnh đúng đường dẫn chứa ProviderProfileService của bạn
+import 'package:appthuetho/views/provider/wallet_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/location_service.dart';
@@ -309,7 +311,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
             color: Colors.green,
             onTap: () {
               // TODO: Tạo file wallet_screen.dart và dẫn link vào đây
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tính năng Ví tiền đang phát triển')));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
             },
           ),
           const SizedBox(height: 12),
@@ -331,6 +333,18 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const FAQScreen()));
             },
+          ),
+          const SizedBox(height: 12),
+          _buildMenuItem(
+            icon: Icons.help_outline,
+            title: 'chuyển sang Khach',
+            subtitle: 'chuyển sang Khach',
+            color: Colors.yellow,
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+              );            },
           ),
           const SizedBox(height: 12),
           _buildMenuItem(

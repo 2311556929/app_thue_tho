@@ -1,4 +1,6 @@
 import 'package:appthuetho/controllers/auth_controller.dart';
+import 'package:appthuetho/data/csv_knowledge_base.dart';
+import 'package:appthuetho/services/rag_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +23,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  CsvKnowledgeBase.loadData(); // không await - chạy nền
+
+  // ✅ THÊM: Seed CSV lên Firestore để backup (1 lần)
+  RagService.seedCsvToFirestore(); // không await - chạy nền
 
   // await NotificationService.init();
 

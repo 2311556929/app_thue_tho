@@ -13,6 +13,7 @@ import '../../models/job_model.dart';
 import 'searching_technician_screen.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../services/ai_service_updated.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 // --- DATA MODEL CHO AI GỢI Ý GIÁ ---
 class ApplianceIssue {

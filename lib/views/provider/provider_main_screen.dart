@@ -1,10 +1,8 @@
-import 'package:appthuetho/views/customer/chat_detail_screen_realtime.dart';
 import 'package:flutter/material.dart';
 import 'provider_dashboard.dart';
 import 'new_jobs_screen.dart';
-import '../customer/chat_screen_realtime.dart';
 
-// ✅ IMPORT FILE CHAT VÀ PROFILE CHUẨN
+// ✅ IMPORT FILE PROFILE CHUẨN
 import 'provider_profile_screen_complete.dart';   // Hoặc 'provider_profile_screen.dart' tuỳ tên file bạn đặt
 
 class ProviderMainScreen extends StatefulWidget {
@@ -27,7 +25,7 @@ class _ProviderMainScreenState extends State<ProviderMainScreen> {
         onViewNewOrders: () => setState(() => _currentIndex = 1),
       ),
       const NewJobsScreen(),
-      const ChatScreenRealtime(),
+      // Đã xoá màn hình Chat ở đây
       const ProviderProfileScreen(),
     ];
   }
@@ -48,7 +46,7 @@ class _ProviderMainScreenState extends State<ProviderMainScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.notifications_active), label: 'Đơn mới'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
+          // Đã xoá Tab Chat ở đây
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Tài khoản'),
         ],
       ),

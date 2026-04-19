@@ -195,6 +195,80 @@ class _JobProgressScreenState extends State<JobProgressScreen> {
       body: Column(
         children: [
           // Phần thông tin khách hàng
+          // KIỂM TRA VÀ HIỂN THỊ ẢNH KHÁCH CHỤP
+          if (widget.jobData['imagePath'] != null && widget.jobData['imagePath'].toString().isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'Hình ảnh đính kèm:',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () {
+                // Tính năng: Bấm vào để phóng to ảnh
+                showDialog(
+                  context: context,
+                  builder: (_) => Dialog(
+                    backgroundColor: Colors.transparent,
+                    insetPadding: const EdgeInsets.all(8),
+                    child: InteractiveViewer( // Cho phép zoom bằng 2 ngón tay
+                      clipBehavior: Clip.none,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.network(
+                          widget.jobData['imagePath'],
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  widget.jobData['imagePath'],
+                  width: double.infinity,
+                  height: 180, // Chiều cao khung ảnh mặc định
+                  fit: BoxFit.cover,
+                  // Hiệu ứng load ảnh chuyên nghiệp
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      height: 180,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF00AEEF),
+                        ),
+                      ),
+                    );
+                  },
+                  // Xử lý khi đường dẫn ảnh bị lỗi
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 150,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.broken_image, color: Colors.grey[400], size: 40),
+                        const SizedBox(height: 8),
+                        Text('Không thể tải ảnh', style: TextStyle(color: Colors.grey[500])),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.white,

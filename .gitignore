@@ -52,3 +52,14 @@ dist/
 ".env" 
 backend-appthuetho/*.json
 *.apk
+# Chặn file chứa mã khóa Google/Firebase
+backend-appthuetho/*.json
+*.json
+
+# Chặn file cài đặt APK
+*.apk
+
+# Chặn các thư mục build của Android
+.gradle/
+build/
+capture/
