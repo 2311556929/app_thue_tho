@@ -257,15 +257,17 @@ class _VoucherScreenState extends State<VoucherScreen> with SingleTickerProvider
                     children: [
                       Icon(Icons.shopping_bag, color: Colors.white.withOpacity(0.7), size: 14),
                       const SizedBox(width: 4),
-                      Text(
+                      Expanded(
+                      child:Text(
                         'Đơn tối thiểu: ${voucher['minOrder']}',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 12,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const Spacer(),
-                      Icon(Icons.access_time, color: Colors.white.withOpacity(0.7), size: 14),
+                      ),
+                      const SizedBox(width: 8), // Thay thế Spacer() bằng SizedBox để tạo khoảng cách cố định                      Icon(Icons.access_time, color: Colors.white.withOpacity(0.7), size: 14),
                       const SizedBox(width: 4),
                       Text(
                         'HSD: ${voucher['expiry']}',

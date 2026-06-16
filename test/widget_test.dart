@@ -1,30 +1,26 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:appthuetho/main.dart';
+import 'package:provider/provider.dart';
+import 'package:appthuetho/main.dart';           // Đường dẫn đến main.dart của em
+import 'package:appthuetho/controllers/auth_controller.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('App Thuê Thợ khởi động thành công', (WidgetTester tester) async {
+    // Wrap với MultiProvider giống như trong main.dart của em
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => AuthController()),
+          // Nếu em có thêm controller khác thì thêm vào đây
+        ],
+        child: const MyApp(),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Kiểm tra app có build thành công không
+    expect(find.byType(MaterialApp), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Hoặc kiểm tra có thấy chữ "Hồ sơ", "Trang chủ"... tùy em muốn
+    // expect(find.text('Hồ sơ'), findsOneWidget); // ví dụ
   });
 }

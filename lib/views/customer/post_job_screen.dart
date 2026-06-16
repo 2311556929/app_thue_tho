@@ -6,8 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Thêm import này
-import 'dart:math'; // Thêm import này
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:math';
 import '../../controllers/auth_controller.dart';
 import '../../models/job_model.dart';
 import 'searching_technician_screen.dart';
@@ -249,9 +249,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
     });
   }
 
-  // ========================================
-  // HÀM _submitJob MỚI ĐÃ DÁN TỪ FILE GỢI Ý
-  // ========================================
   Future<void> _submitJob() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -398,224 +395,425 @@ class _PostJobScreenState extends State<PostJobScreen> {
     return earthRadius * 2 * atan2(sqrt(a), sqrt(1 - a));
   }
 
+  // --- WIDGET TIỆN ÍCH CHO GIAO DIỆN MỚI ---
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF1F2937), // Dark grey
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCardContainer({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            spreadRadius: 0,
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  InputDecoration _buildInputDecoration({required String hintText, IconData? prefixIcon}) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+      prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: Colors.grey.shade600, size: 20) : null,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.grey.shade200),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.grey.shade200),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFF00AEEF), width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Colors.red, width: 1),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Định nghĩa màu chủ đạo
+    const Color primaryColor = Color(0xFF00AEEF);
+    const Color backgroundColor = Color(0xFFF9FAFB);
+
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text(widget.isScheduling ? 'Đặt lịch hẹn' : 'Đặt dịch vụ'),
-        backgroundColor: const Color(0xFF00AEEF),
+        title: Text(
+          widget.isScheduling ? 'Đặt lịch hẹn' : 'Đặt dịch vụ mới',
+          style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 18),
+        ),
+        centerTitle: true,
+        backgroundColor: primaryColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Chọn dịch vụ *', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _selectedService,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-                hint: const Text('Chọn loại dịch vụ'),
-                items: _services.map((service) => DropdownMenuItem(value: service, child: Text(service))).toList(),
-                onChanged: (value) => setState(() => _selectedService = value),
-                validator: (value) => value == null ? 'Vui lòng chọn dịch vụ' : null,
-              ),
+              // --- SECTION 1: DỊCH VỤ & THỜI GIAN ---
+              _buildSectionHeader(widget.isScheduling ? '1. Dịch vụ & Lịch hẹn' : '1. Chọn loại dịch vụ'),
+              _buildCardContainer(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Bạn cần sửa thiết bị gì? *', style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: _selectedService,
+                      style: const TextStyle(color: Colors.black87, fontSize: 15),
+                      decoration: _buildInputDecoration(hintText: 'Chọn một loại dịch vụ'),
+                      items: _services.map((service) => DropdownMenuItem(value: service, child: Text(service))).toList(),
+                      onChanged: (value) => setState(() => _selectedService = value),
+                      validator: (value) => value == null ? 'Vui lòng chọn một loại dịch vụ' : null,
+                      icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+                    ),
 
-              if (widget.isScheduling) ...[
-                const SizedBox(height: 24),
-                const Text('Thời gian hẹn *', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: _pickSchedule,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(12)),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_month, color: Color(0xFF00AEEF)),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            _scheduledDateTime == null
-                                ? 'Chọn ngày giờ hẹn'
-                                : (_isLocaleReady ? DateFormat('EEEE, dd/MM/yyyy - HH:mm', 'vi').format(_scheduledDateTime!) : 'Đang tải...'),
-                            style: TextStyle(color: _scheduledDateTime == null ? Colors.grey : Colors.black, fontSize: 15),
+                    if (widget.isScheduling) ...[
+                      const SizedBox(height: 16),
+                      const Text('Thời gian bạn rảnh? *', style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500)),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: _pickSchedule,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade200),
+                            borderRadius: BorderRadius.circular(16),
+                            color: Colors.white,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.calendar_month, color: primaryColor, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _scheduledDateTime == null
+                                      ? 'Chọn ngày và giờ hẹn cụ thể'
+                                      : (_isLocaleReady ? DateFormat('EEEE, dd/MM/yyyy - HH:mm', 'vi').format(_scheduledDateTime!) : 'Đang tải lịch...'),
+                                  style: TextStyle(color: _scheduledDateTime == null ? Colors.grey.shade400 : Colors.black87, fontSize: 15),
+                                ),
+                              ),
+                              Icon(Icons.access_time_filled, color: Colors.grey.shade400, size: 20),
+                            ],
                           ),
                         ),
-                        const Icon(Icons.arrow_drop_down),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-
-              const SizedBox(height: 24),
-              const Text('Hình ảnh thiết bị', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _pickImage(ImageSource.camera),
-                      icon: const Icon(Icons.camera_alt), label: const Text('Chụp ảnh'),
-                      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _pickImage(ImageSource.gallery),
-                      icon: const Icon(Icons.photo_library), label: const Text('Thư viện'),
-                      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                    ),
-                  ),
-                ],
-              ),
-
-              if (_selectedImage != null) ...[
-                const SizedBox(height: 16),
-                Stack(
-                  children: [
-                    ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(_selectedImage!, height: 200, width: double.infinity, fit: BoxFit.cover)),
-                    Positioned(
-                      top: 8, right: 8,
-                      child: IconButton(
-                        icon: const Icon(Icons.cancel, color: Colors.red, size: 32),
-                        onPressed: () => setState(() { _selectedImage = null; _suggestedIssues = []; _currentEstimatedPrice = null; }),
                       ),
-                    ),
+                    ],
                   ],
                 ),
-              ],
-
-              const SizedBox(height: 24),
-              const Text('Mô tả chi tiết *', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _descriptionController,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  hintText: 'Mô tả tình trạng, vấn đề cần sửa...',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  contentPadding: const EdgeInsets.all(16),
-                ),
-                validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng mô tả chi tiết' : null,
               ),
+              const SizedBox(height: 24),
 
-              if (_isAnalyzing)
-                const Padding(
-                  padding: EdgeInsets.only(top: 16),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-                        SizedBox(width: 8),
-                        Text('AI đang phân tích & báo giá...', style: TextStyle(color: Colors.blue, fontStyle: FontStyle.italic)),
-                      ],
+              // --- SECTION 2: MÔ TẢ & HÌNH ẢNH ---
+              _buildSectionHeader('2. Tình trạng & Hình ảnh'),
+              _buildCardContainer(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Mô tả chi tiết tình trạng *', style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _descriptionController,
+                      maxLines: 4,
+                      style: const TextStyle(fontSize: 15, height: 1.4),
+                      decoration: _buildInputDecoration(hintText: 'Mô tả vấn đề thiết bị của bạn đang gặp phải, các dấu hiệu lỗi...'),
+                      validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập mô tả tình trạng chi tiết' : null,
                     ),
+
+                    const SizedBox(height: 16),
+                    // Vùng picker hình ảnh được nâng cấp
+                    if (_selectedImage == null)
+                      GestureDetector(
+                        onTap: () {
+                          // Hiển thịBottomSheet để chọn nguồn ảnh
+                          showModalBottomSheet(
+                            context: context,
+                            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                            builder: (builder) {
+                              return Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text('Chọn nguồn ảnh thiết bị', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 20),
+                                    Row(
+                                      children: [
+                                        Expanded(child: _buildImageSourceButton(Icons.camera_alt, 'Chụp ảnh mới', primaryColor, () {
+                                          Navigator.pop(context);
+                                          _pickImage(ImageSource.camera);
+                                        })),
+                                        const SizedBox(width: 16),
+                                        Expanded(child: _buildImageSourceButton(Icons.photo_library, 'Chọn từ thư viện', primaryColor, () {
+                                          Navigator.pop(context);
+                                          _pickImage(ImageSource.gallery);
+                                        })),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          height: 140,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0F9FF), // Rất nhẹ xanh
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: primaryColor.withOpacity(0.3), style: BorderStyle.solid, width: 1.5),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_a_photo_outlined, color: primaryColor, size: 40),
+                              const SizedBox(height: 12),
+                              const Text('Thêm hình ảnh thiết bị lỗi', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w600, fontSize: 15)),
+                              const SizedBox(height: 4),
+                              Text('(Giúp thợ đoán bệnh & AI báo giá chính xác)', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.file(_selectedImage!, height: 180, width: double.infinity, fit: BoxFit.cover),
+                          ),
+                          Positioned(
+                            top: 10, right: 10,
+                            child: GestureDetector(
+                              onTap: () => setState(() { _selectedImage = null; _suggestedIssues = []; _currentEstimatedPrice = null; }),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                child: const Icon(Icons.close, color: Colors.white, size: 20),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // --- SECTION: AI ANALYSIS ---
+              if (_isAnalyzing)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(color: const Color(0xFFE0F2FE), borderRadius: BorderRadius.circular(12)),
+                  child: Row(
+                    children: const [
+                      SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.5, color: primaryColor)),
+                      SizedBox(width: 12),
+                      Text('Công nghệ AI đang phân tích lỗi & gợi ý giá...', style: TextStyle(color: Color(0xFF0369A1), fontStyle: FontStyle.italic, fontWeight: FontWeight.w500)),
+                    ],
                   ),
                 ),
 
               if (!_isAnalyzing && _isTypingOrAnalyzing)
                 Padding(
-                  padding: const EdgeInsets.only(top: 16),
+                  padding: const EdgeInsets.only(bottom: 24),
                   child: _suggestedIssues.isNotEmpty
                       ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('AI Gợi ý bệnh & mức giá:', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
+                      Row(
+                        children: const [
+                          Icon(Icons.auto_awesome, color: Colors.green, size: 18),
+                          SizedBox(width: 8),
+                          Text('AI gợi ý vấn đề & mức giá tham khảo:', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 15)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
                       Wrap(
-                        spacing: 8.0,
-                        runSpacing: 4.0,
-                        children: _suggestedIssues.map((item) => ActionChip(
-                          label: Text('${item.title} (${item.price})'),
-                          backgroundColor: Colors.green.shade50,
-                          side: BorderSide(color: Colors.green.shade200),
-                          onPressed: () {
+                        spacing: 10.0,
+                        runSpacing: 8.0,
+                        children: _suggestedIssues.map((item) => GestureDetector(
+                          onTap: () {
                             _descriptionController.text = item.title;
                             _descriptionController.selection = TextSelection.fromPosition(TextPosition(offset: _descriptionController.text.length));
                             setState(() => _currentEstimatedPrice = item.price);
                           },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFECFDF5),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.green.shade200),
+                            ),
+                            child: Text(
+                              '${item.title} (${item.price})',
+                              style: TextStyle(color: Colors.green.shade900, fontWeight: FontWeight.w500, fontSize: 13),
+                            ),
+                          ),
                         )).toList(),
                       ),
                     ],
                   )
                       : Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
-                    child: const Text("💡 Nhập chi tiết hơn hoặc thêm ảnh để AI gợi ý giá chính xác nhé!", style: TextStyle(color: Colors.blue)),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(color: const Color(0xFFF0F9FF), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.blue.shade200)),
+                    child: const Text("💡 Tip: Nhập mô tả chi tiết hơn hoặc chụp ảnh lỗi để nhận gợi ý giá từ AI chính xác nhất nhé!", style: TextStyle(color: Color(0xFF0369A1), fontSize: 14, height: 1.4)),
                   ),
                 ),
 
               if (_currentEstimatedPrice != null)
                 Padding(
-                  padding: const EdgeInsets.only(top: 16.0),
+                  padding: const EdgeInsets.only(bottom: 24.0),
                   child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.orange.shade200)),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7ED),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.orange.shade200),
+                    ),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.info_outline, color: Colors.orange.shade700),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text('Giá tham khảo: $_currentEstimatedPrice\n(Thợ sẽ kiểm tra thực tế và chốt giá)', style: TextStyle(color: Colors.orange.shade900, fontWeight: FontWeight.w600))),
+                        Icon(Icons.info_outline, color: Colors.orange.shade700, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Giá AI tham khảo: $_currentEstimatedPrice', style: TextStyle(color: Colors.orange.shade900, fontWeight: FontWeight.bold, fontSize: 15)),
+                              const SizedBox(height: 4),
+                              Text('(Giá cuối cùng thợ sẽ chốt sau khi kiểm tra trực tiếp)', style: TextStyle(color: Colors.orange.shade800, fontSize: 12, height: 1.3)),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
 
-              const SizedBox(height: 24),
-              const Text('Số điện thoại liên hệ *', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  hintText: 'Nhập số điện thoại',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  contentPadding: const EdgeInsets.all(16),
-                  prefixIcon: const Icon(Icons.phone),
+              // --- SECTION 3: LIÊN HỆ & ĐỊA CHỈ ---
+              _buildSectionHeader('3. Liên hệ & Địa chỉ'),
+              _buildCardContainer(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Số điện thoại liên hệ *', style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      style: const TextStyle(fontSize: 15),
+                      decoration: _buildInputDecoration(hintText: 'Ví dụ: 0912xxxxxx', prefixIcon: Icons.phone_enabled_outlined),
+                      validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập số điện thoại' : null,
+                    ),
+
+                    const SizedBox(height: 16),
+                    const Text('Địa chỉ thiết bị *', style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _addressController,
+                      style: const TextStyle(fontSize: 15),
+                      decoration: _buildInputDecoration(
+                        hintText: 'Nhập địa chỉ của bạn hoặc dùng GPS',
+                        prefixIcon: Icons.home_work_outlined,
+                      ).copyWith(
+                        suffixIcon: _isLoadingLocation
+                            ? const Padding(padding: EdgeInsets.all(14), child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor)))
+                            : IconButton(icon: const Icon(Icons.my_location, color: primaryColor, size: 20), onPressed: _getCurrentLocation),
+                      ),
+                      validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập địa chỉ của thiết bị' : null,
+                    ),
+                  ],
                 ),
-                validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập số điện thoại' : null,
               ),
 
-              const SizedBox(height: 24),
-              const Text('Địa chỉ *', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _addressController,
-                decoration: InputDecoration(
-                  hintText: 'Nhập địa chỉ hoặc dùng vị trí hiện tại',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  contentPadding: const EdgeInsets.all(16),
-                  suffixIcon: _isLoadingLocation
-                      ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
-                      : IconButton(icon: const Icon(Icons.my_location), onPressed: _getCurrentLocation),
-                ),
-                validator: (value) => (value == null || value.trim().isEmpty) ? 'Vui lòng nhập địa chỉ' : null,
-              ),
+              const SizedBox(height: 40),
 
-              const SizedBox(height: 32),
+              // --- NÚT BẤM CHỐT - ĐƯỢC NÂNG CẤP CHUYÊN NGHIỆP ---
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submitJob,
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00AEEF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)), // Bo tròn cực đại
+                    elevation: 5,
+                    shadowColor: primaryColor.withOpacity(0.4),
+                  ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(widget.isScheduling ? 'Xác nhận đặt lịch' : 'Tìm thợ ngay', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                      : Text(
+                    widget.isScheduling ? 'XÁC NHẬN ĐẶT LỊCH NGAY' : 'TÌM THỢ ĐẾN NGAY',
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // Widget tiện ích cho nút chọn nguồn ảnh trong BottomSheet
+  Widget _buildImageSourceButton(IconData icon, String label, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 100,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 10),
+            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 14), textAlign: TextAlign.center),
+          ],
         ),
       ),
     );

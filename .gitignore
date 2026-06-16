@@ -51,9 +51,6 @@ dist/
 .DS_Store
 ".env" 
 backend-appthuetho/*.json
-*.apk
-# Chặn file chứa mã khóa Google/Firebase
-backend-appthuetho/*.json
 *.json
 
 # Chặn file cài đặt APK

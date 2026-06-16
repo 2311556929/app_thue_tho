@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 import 'chatbot_support_screen.dart'; // Điều chỉnh đường dẫn nếu cần
-class FAQScreen extends StatelessWidget {
+
+class FAQScreen extends StatefulWidget {
   const FAQScreen({super.key});
+
+  @override
+  State<FAQScreen> createState() => _FAQScreenState();
+}
+
+class _FAQScreenState extends State<FAQScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   final List<Map<String, String>> _faqs = const [
     {
@@ -69,10 +78,24 @@ class FAQScreen extends StatelessWidget {
   ];
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Group FAQs by category
+    // 1. Lọc FAQ dựa trên từ khóa tìm kiếm
+    final filteredFaqs = _faqs.where((faq) {
+      final question = faq['question']!.toLowerCase();
+      final answer = faq['answer']!.toLowerCase();
+      final query = _searchQuery.toLowerCase();
+      return question.contains(query) || answer.contains(query);
+    }).toList();
+
+    // 2. Nhóm FAQ đã lọc theo danh mục
     final Map<String, List<Map<String, String>>> groupedFaqs = {};
-    for (var faq in _faqs) {
+    for (var faq in filteredFaqs) {
       final category = faq['category']!;
       if (!groupedFaqs.containsKey(category)) {
         groupedFaqs[category] = [];
@@ -81,155 +104,173 @@ class FAQScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        title: const Text('Câu hỏi thường gặp'),
-        backgroundColor: const Color(0xFF00AEEF),
+        title: const Text(
+          'Câu hỏi thường gặp',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black87),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: Colors.grey.shade200, height: 1),
+        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Search hint
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.blue[50],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue[200]!),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(), // Ẩn bàn phím khi bấm ra ngoài
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          children: [
+            // Tiêu đề chào mừng
+            Text(
+              'Chúng tôi có thể\ngiúp gì cho bạn?',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.blue.shade900, height: 1.2),
             ),
-            child: Row(
-              children: [
-                Icon(Icons.search, color: Colors.blue[700]),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Tìm câu trả lời cho vấn đề của bạn',
-                    style: TextStyle(color: Colors.blue[900]),
-                  ),
+            const SizedBox(height: 24),
+
+            // Thanh tìm kiếm
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4)),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _searchQuery = value),
+                decoration: InputDecoration(
+                  hintText: 'Nhập từ khóa cần tìm...',
+                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
+                  prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF00AEEF)),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                    icon: const Icon(Icons.cancel_rounded, color: Colors.grey, size: 20),
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                  )
+                      : null,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-              ],
+              ),
             ),
-          ),
+            const SizedBox(height: 32),
 
-          const SizedBox(height: 16),
-
-          // FAQ by category
-          ...groupedFaqs.entries.map((entry) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _getCategoryIcon(entry.key),
-                        color: const Color(0xFF00AEEF),
-                        size: 20,
+            // Hiển thị nội dung
+            if (groupedFaqs.isEmpty)
+              _buildEmptyState()
+            else
+              ...groupedFaqs.entries.map((entry) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Tiêu đề danh mục
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16, top: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00AEEF).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(_getCategoryIcon(entry.key), color: const Color(0xFF00AEEF), size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            entry.key,
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        entry.key,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                ...entry.value.map((faq) => _buildFAQItem(
-                  faq['question']!,
-                  faq['answer']!,
-                )),
-                const SizedBox(height: 8),
-              ],
-            );
-          }),
+                    ),
 
-          const SizedBox(height: 16),
+                    // Danh sách câu hỏi trong danh mục
+                    ...entry.value.map((faq) => _buildFAQItem(faq['question']!, faq['answer']!)),
+                    const SizedBox(height: 16),
+                  ],
+                );
+              }),
 
-          // Contact support
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[200]!),
-            ),
-            child: Column(
-              children: [
-                const Icon(
-                  Icons.support_agent,
-                  color: Color(0xFF00AEEF),
-                  size: 48,
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Không tìm thấy câu trả lời?',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Liên hệ với đội hỗ trợ của chúng tôi',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ChatbotSupportScreen()),
-                    );
-                  },
-                  icon: const Icon(Icons.headset_mic),
-                  label: const Text('Liên hệ hỗ trợ'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF00AEEF),
-                    side: const BorderSide(color: Color(0xFF00AEEF)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+            const SizedBox(height: 24),
+            _buildSupportBanner(),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }
 
+  // Khung trống khi tìm kiếm không ra kết quả
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Column(
+          children: [
+            Icon(Icons.search_off_rounded, size: 80, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Text(
+              'Không tìm thấy kết quả',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Thử tìm kiếm bằng từ khóa khác hoặc\nliên hệ trực tiếp với chúng tôi.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 14, height: 1.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Khối ExpansionTile tùy chỉnh
   Widget _buildFAQItem(String question, String answer) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200, width: 1.5),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
       ),
       child: Theme(
-        data: ThemeData(dividerColor: Colors.transparent),
+        data: ThemeData(dividerColor: Colors.transparent), // Xóa dòng kẻ mặc định
         child: ExpansionTile(
+          iconColor: const Color(0xFF00AEEF),
+          collapsedIconColor: Colors.grey.shade500,
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          childrenPadding: const EdgeInsets.only(
-            left: 16,
-            right: 16,
-            bottom: 16,
-          ),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
           title: Text(
             question,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF1F2937)),
           ),
           children: [
-            Text(
-              answer,
-              style: TextStyle(
-                color: Colors.grey[700],
-                height: 1.5,
+            const Divider(height: 16, thickness: 1),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                answer,
+                style: TextStyle(color: Colors.grey.shade600, height: 1.6, fontSize: 14),
               ),
             ),
           ],
@@ -238,16 +279,80 @@ class FAQScreen extends StatelessWidget {
     );
   }
 
+  // Banner liên hệ hỗ trợ AI xịn xò
+  Widget _buildSupportBanner() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [const Color(0xFF00AEEF), Colors.blue.shade700],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: const Color(0xFF00AEEF).withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 8)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                child: const Icon(Icons.support_agent_rounded, color: Colors.white, size: 28),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Text(
+                  'Vẫn cần trợ giúp?',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Chat trực tiếp với Trợ lý AI hoặc tổng đài viên để được giải quyết vấn đề nhanh nhất.',
+            style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14, height: 1.5),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ChatbotSupportScreen()),
+                );
+              },
+              icon: Icon(Icons.chat_bubble_outline_rounded, size: 20, color: Colors.blue.shade700),
+              label: Text('Chat với Hỗ trợ ngay', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   IconData _getCategoryIcon(String category) {
     switch (category) {
       case 'Thanh toán':
-        return Icons.payment;
+        return Icons.account_balance_wallet_rounded;
       case 'Đơn hàng':
-        return Icons.assignment;
+        return Icons.assignment_rounded;
       case 'Tài khoản':
-        return Icons.account_circle;
+        return Icons.manage_accounts_rounded;
       default:
-        return Icons.help_outline;
+        return Icons.help_outline_rounded;
     }
   }
 }

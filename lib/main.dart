@@ -1,36 +1,42 @@
+// ============================================================
+// lib/main.dart  — THAY TOÀN BỘ
+// ============================================================
 import 'package:appthuetho/controllers/auth_controller.dart';
 import 'package:appthuetho/data/csv_knowledge_base.dart';
+import 'package:appthuetho/services/notification_service.dart'; // ← dùng file mới
 import 'package:appthuetho/services/rag_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/date_symbol_data_file.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
-import 'services/notification_service.dart';
 import 'controllers/customer_controller.dart';
 import 'controllers/provider_controller.dart';
-import 'package:firebase_core/firebase_core.dart';
-// Đảm bảo bạn import đúng các đường dẫn này theo project của bạn nhé
 import 'views/auth/login_screen.dart';
 import 'views/customer/customer_main_screen.dart';
-import 'views/provider/provider_main_screen.dart'; // Import màn hình của provider
+import 'views/provider/provider_main_screen.dart';
 
+// ✅ Background handler — phải khai báo ở đây
+@pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print("📢 Nhận thông báo nền: ${message.notification?.title}");
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Lưu thông báo vào Firestore khi app đang tắt
+  await firebaseMessagingBackgroundHandler(message); // từ notification_service.dart
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  CsvKnowledgeBase.loadData(); // không await - chạy nền
 
-  // ✅ THÊM: Seed CSV lên Firestore để backup (1 lần)
-  RagService.seedCsvToFirestore(); // không await - chạy nền
-
-  // await NotificationService.init();
-
+  // ✅ Đăng ký background handler TRƯỚC runApp
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // ✅ Init notification (xin quyền + setup local notification)
+  await NotificationService.init();
+
+  // Preload dữ liệu (chạy nền)
+  CsvKnowledgeBase.loadData();
+  RagService.seedCsvToFirestore();
 
   runApp(
     MultiProvider(
@@ -70,19 +76,17 @@ class MyApp extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF00AEEF),
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
           ),
         ),
-        fontFamily: 'Roboto',
       ),
-      // --- PHẦN THAY ĐỔI Ở ĐÂY ---
       initialRoute: '/login',
       routes: {
         '/login': (context) => const LoginScreen(),
         '/customer-home': (context) => const CustomerMainScreen(),
         '/provider-home': (context) => const ProviderMainScreen(),
       },
-      // Xoá bỏ dòng: home: const CustomerMainScreen(),
     );
   }
 }

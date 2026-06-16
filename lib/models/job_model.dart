@@ -14,7 +14,7 @@ class Job {
   final String status;
   final DateTime createdAt;
   final DateTime? scheduledTime;
-  final double? estimatedPrice; // ✅ Thêm trường này
+  final double? estimatedPrice;
 
   Job({
     required this.id,
@@ -30,7 +30,7 @@ class Job {
     this.status = 'pending',
     required this.createdAt,
     this.scheduledTime,
-    this.estimatedPrice, // ✅
+    this.estimatedPrice,
   });
 
   factory Job.fromJson(Map<String, dynamic> json, String docId) {
@@ -80,7 +80,7 @@ class Job {
       'status': status,
       'createdAt': Timestamp.fromDate(createdAt),
       'scheduledTime': scheduledTime != null ? Timestamp.fromDate(scheduledTime!) : null,
-      'estimatedPrice': estimatedPrice, // ✅
+      'estimatedPrice': estimatedPrice,
     };
   }
 }

@@ -9,7 +9,7 @@ import 'rag_service.dart';
 class AiService {
   // ✅ Key đúng từ api_keys.dart của bạn (bắt đầu AIzaSy...)
   // Thay bằng key từ: https://makersuite.google.com/app/apikey
-  static const String _apiKey = '';
+  static const String _apiKey = 'AIzaSyBAex6vDOwRf8mvJYTVwwhnx5rmEWxz-F8';
 
   /// Hàm chính: Chat với Thợ AI - có RAG từ CSV
   static Future<String> chatWithAI(String message, File? imageFile) async {
